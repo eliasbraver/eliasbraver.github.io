@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Does Eli Work Today?</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Use the full viewport height */
+            font-size: 72px; /* Set the font size to be large */
+        }
+        #result {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1 id="result"></h1>
+
+    <script>
+        // Get today's date
+        const currentDate = new Date();
+
+        // Get the day of the week (0 for Sunday, 1 for Monday, etc.)
+        const dayOfWeek = currentDate.getDay();
+
+        // Determine if Eli works today (Monday through Thursday)
+        const eliWorksToday = dayOfWeek >= 1 && dayOfWeek <= 4;
+
+        // Display the result on the page
+        document.getElementById("result").textContent = eliWorksToday ? "YES" : "NO";
+    </script>
+</body>
+</html>
