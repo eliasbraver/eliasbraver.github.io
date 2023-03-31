@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Does Elias Bravo Work Today?</title>
+    <title>Does Eli Work Today?</title>
     <style>
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh; /* Use the full viewport height */
-            font-size: 72px; /* Set the font size to be large */
         }
         #result {
+            font-size: 72px; /* Set the font size to be large */
+            text-align: center;
+        }
+        #status {
+            font-size: 24px; /* Set the font size for the smaller text */
             text-align: center;
         }
     </style>
 </head>
 <body>
     <h1 id="result"></h1>
+    <h2 id="status"></h2>
 
     <script>
         // Get today's date
@@ -30,6 +36,24 @@
 
         // Display the result on the page
         document.getElementById("result").textContent = eliWorksToday ? "YES" : "NO";
+
+        if (eliWorksToday) {
+            // Get the current time in Central Time
+            const options = { timeZone: 'America/Chicago', hour: 'numeric', minute: 'numeric', hour12: false };
+            const centralTime = new Date().toLocaleString('en-US', options);
+            const [centralHour, centralMinute] = centralTime.split(':').map(Number);
+
+            // Set the smaller text based on the time of day
+            let statusText = '';
+            if (centralHour < 8) {
+                statusText = '(he will)';
+            } else if (centralHour >= 8 && (centralHour < 18 || (centralHour === 18 && centralMinute <= 30))) {
+                statusText = "(he's at work)";
+            } else {
+                statusText = '(he did)';
+            }
+            document.getElementById("status").textContent = statusText;
+        }
     </script>
 </body>
 </html>
