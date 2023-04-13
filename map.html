@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Coordinates on Map</title>
+    <title>Elias Bravo Locator</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map {
@@ -22,7 +22,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         async function initMap() {
-            const serverUrl = 'http://204.87.227.60:3000';
+            const serverUrl = 'https://www.elibraver.com:3000';
             const response = await fetch(`${serverUrl}/api/gps_data`);
             const data = await response.text();
             const lines = data.trim().split('\n');
