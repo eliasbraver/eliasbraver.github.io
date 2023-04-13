@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elias Bravo Location History</title>
+    <title>GPS Coordinates on Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map {
@@ -15,45 +15,145 @@
             margin: 0;
             padding: 0;
         }
+
+        .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+        z-index: 1000;
+    }
+
+    .info h4 {
+        text-align: center;
+        font-size: 16px;
+        margin: 4px 0 8px;
+        color: #777;
+    }
+
+    .info .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .info i.legend-color {
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+        opacity: 0.7;
+        flex-shrink: 0;
+    }
+
+    .info i.icon-blue {
+        background: rgb(0, 0, 255);
+    }
+
+    .info i.icon-red {
+        background: rgb(255, 0, 0);
+    }
     </style>
 </head>
 <body>
     <div id="map"></div>
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        async function initMap() {
-    const serverUrl = 'https://www.elibraver.com:3000';
-    try {
-        const response = await fetch(`${serverUrl}/api/gps_data`);
-        if (!response.ok) {
-            throw new Error(`Error fetching GPS data: ${response.status} ${response.statusText}`);
+	const serverUrl = 'https://www.elibraver.com:3000';
+        function calculateTotalDistance(coordinates) {
+    let distance = 0;
+    for (let i = 1; i < coordinates.length; i++) {
+        const prevLatLng = L.latLng(coordinates[i - 1]);
+        const curLatLng = L.latLng(coordinates[i]);
+        distance += prevLatLng.distanceTo(curLatLng);
+    }
+    return distance;
+}
+
+async function initMap() {
+    const response = await fetch(`${serverUrl}/api/gps_data`);
+    const data = await response.text();
+    const lines = data.trim().split('\n');
+    const coordinates = lines.slice(-720)
+        .map(line => line.split(',').map(parseFloat))
+        .filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng)); // Filter out invalid coordinates
+
+    if (!coordinates.length) {
+        // No valid coordinates, exit early
+        return;
+    }
+
+    const map = L.map('map').setView([coordinates[0][0], coordinates[0][1]], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const totalDistance = calculateTotalDistance(coordinates);
+    addPolyline(map, coordinates, totalDistance);
+    addLegend(map); // Add legend to the map
+}
+
+
+
+
+       function addPolyline(map, coordinates, totalDistance) {
+    const polylinePoints = [];
+    let accumulatedDistance = 0;
+
+    for (let i = 0; i < coordinates.length; i++) {
+        const lat = coordinates[i][0];
+        const lng = coordinates[i][1];
+
+        if (isNaN(lat) || isNaN(lng)) {
+            continue;
         }
-        const data = await response.text();
-        const lines = data.trim().split('\n');
-        const coordinates = lines.map(line => line.split(',').map(parseFloat)).filter(([lat, lng]) => !isNaN(lat) && !isNaN(lng));
 
-        if (coordinates.length === 0) {
-            throw new Error('No valid GPS data available.');
+        const latLng = L.latLng(lat, lng);
+        polylinePoints.push(latLng);
+
+        if (i < coordinates.length - 1) {
+            const nextLatLng = L.latLng(coordinates[i + 1]);
+            accumulatedDistance += latLng.distanceTo(nextLatLng);
+            const color = getColor(accumulatedDistance / totalDistance);
+            L.polyline([latLng, nextLatLng], { color }).addTo(map);
+        } else {
+            L.marker(latLng).addTo(map);
         }
-
-        const map = L.map('map').setView([coordinates[0][0], coordinates[0][1]], 15);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        // Draw a polyline connecting the locations
-        L.polyline(coordinates, { color: 'blue' }).addTo(map);
-
-        // Add a marker for the most recent location
-        const mostRecentLocation = coordinates[coordinates.length - 1];
-        L.marker(mostRecentLocation).addTo(map);
-    } catch (error) {
-        console.error('Error initializing the map:', error);
     }
 }
 
 
+
+        function getColor(value) {
+    const r = Math.floor(255 * value);
+    const b = Math.floor(255 * (1 - value));
+    return `rgb(${r}, 0, ${b})`;
+}
+
+
+        function addLegend(map) {
+    const legend = L.control({ position: 'bottomright' });
+
+    legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'info');
+        const labels = [
+            { color: 'icon-blue', text: 'Oldest Location' },
+            { color: 'icon-red', text: 'Newest Location' }
+        ];
+
+        div.innerHTML = '<h4>Color Legend</h4>';
+
+        labels.forEach(label => {
+            div.innerHTML += `<div class="legend-item"><i class="legend-color ${label.color}"></i><span>${label.text}</span></div>`;
+        });
+
+        return div;
+    };
+
+    legend.addTo(map);
+}
 
 
         initMap();
