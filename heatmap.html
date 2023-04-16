@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Heatmap</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+  <style>
+    #map { width: 100%; height: 100vh; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script>
+  // Fetch GPS data
+  async function fetchGPSData() {
+  const response = await fetch('https://www.elibraver.com:3000/api/gps_data');
+  const rawData = await response.text();
+  const lines = rawData.split('\n').filter(line => line.trim() !== '');
+  const validCoordinates = lines
+    .map(line => {
+      const parts = line.split(',');
+      const lat = parseFloat(parts[0].trim());
+      const lng = parseFloat(parts[1].trim());
+      return {latitude: lat, longitude: lng};
+    })
+    .filter(coord => !isNaN(coord.latitude) && !isNaN(coord.longitude));
+  return validCoordinates;
+}
+
+
+  // Initialize the map
+  const map = L.map('map').setView([36.118311, -97.0617073], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  // Add heatmap
+  fetchGPSData().then(gpsData => {
+    console.log('GPS Data:', gpsData); // Log the data
+    const heatData = gpsData.map(point => [point.latitude, point.longitude]);
+    const heatLayer = L.heatLayer(heatData, {radius: 25}).addTo(map);
+  });
+</script>
+
+
+
+</body>
+</html>
