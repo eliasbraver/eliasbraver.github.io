@@ -41,10 +41,12 @@
 
   // Add heatmap
   fetchGPSData().then(gpsData => {
-    console.log('GPS Data:', gpsData); // Log the data
-    const heatData = gpsData.map(point => [point.latitude, point.longitude]);
-    const heatLayer = L.heatLayer(heatData, {radius: 25}).addTo(map);
-  });
+  console.log('GPS Data:', gpsData); // Log the data
+  const heatData = gpsData.map(point => [point.latitude, point.longitude]);
+  
+  // Adjust the max and blur options to modify the appearance of the heatmap
+  const heatLayer = L.heatLayer(heatData, {radius: 25, max: 10, blur: 15}).addTo(map);
+});
 </script>
 
 
